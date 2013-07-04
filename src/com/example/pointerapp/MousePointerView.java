@@ -15,20 +15,20 @@ import android.view.ViewGroup.LayoutParams;
 public class MousePointerView extends ImageView{
 	private final Bitmap bitmap;
 	private float posX = 0, posY = 0;
-	
+
 	public MousePointerView(Context context, Bitmap bitmap) {
 		super(context);
 		this.bitmap = bitmap;
 		// TODO Auto-generated constructor stub
 	}
-	
-//	private void updateView(View view, float x, float y) {
-//		LinearLayout.LayoutParams params =
-//				new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
-//		params.leftMargin = Math.round(x);
-//		params.rightMargin = Math.round(y);
-//		view.setLayoutParams(params);
-//	}
+
+	//	private void updateView(View view, float x, float y) {
+	//		LinearLayout.LayoutParams params =
+	//				new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
+	//		params.leftMargin = Math.round(x);
+	//		params.rightMargin = Math.round(y);
+	//		view.setLayoutParams(params);
+	//	}
 	private boolean FLAG_INIT = true;
 	@Override
 	protected void onDraw(Canvas canvas) {
@@ -59,5 +59,5 @@ public class MousePointerView extends ImageView{
 		}
 		return true;
 	}
-	
+
 }
