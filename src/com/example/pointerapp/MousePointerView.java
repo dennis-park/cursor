@@ -34,8 +34,8 @@ public class MousePointerView extends ImageView{
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
 		if (FLAG_INIT) {
-			posX = (float) ((this.getRight()-this.getLeft())/2.5);
-			posY = (float) ((this.getBottom()-this.getTop())/2.5);
+			posX = (float) ((this.getRight()-this.getLeft())/2.3);
+			posY = (float) ((this.getBottom()-this.getTop())/2.3);
 			FLAG_INIT = false;
 		}
 		canvas.drawBitmap(bitmap, posX, posY, null);
@@ -47,10 +47,6 @@ public class MousePointerView extends ImageView{
 		case MotionEvent.ACTION_DOWN:
 			break;
 		case MotionEvent.ACTION_UP:
-			posX = event.getX();
-			posY = event.getY();
-			invalidate();
-			//maintain
 			break;
 		case MotionEvent.ACTION_MOVE:
 			posX = event.getX();
