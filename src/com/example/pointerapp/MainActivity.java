@@ -34,6 +34,7 @@ public class MainActivity extends Activity{
 	//	private GestureLibrary mLib;
 	private SensorManager mManager;
 	private Sensor mSensor;
+	private MousePointerView pointerView;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +57,7 @@ public class MainActivity extends Activity{
 		//display finger cursor on single canvas
 		Bitmap bitmap = BitmapFactory.decodeResource(getResources(), 
 				R.drawable.cursor);
-		MousePointerView pointerView = new MousePointerView(this, bitmap);
+		pointerView = new MousePointerView(this, bitmap);
 		setContentView(pointerView);
 
 		//		//fragment
@@ -127,10 +128,11 @@ public class MainActivity extends Activity{
 		@Override
 		public void onSensorChanged(SensorEvent event) {
 			int mType = event.sensor.getType();
-			if (mType == Sensor.TYPE_LINEAR_ACCELERATION && FLAG_INIT==false) {
+			if (mType == Sensor.TYPE_LINEAR_ACCELERATION) {
 				integrate(event);
 				//redraw position of cursor change
-				FLAG_INIT = true;
+				pointerView.updatePosition(Disp[0],Disp[1],Disp[2]);
+				
 			}
 		}
 		private float[] Accl = new float[3];
