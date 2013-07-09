@@ -29,14 +29,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 public class MainActivity extends Activity{
-	//	private float mLastX, mLastY, mLastZ;
-	//	private boolean mInitialized;
-	//	private SensorManager mSensorManager;
-	//	private Sensor mAccelerometer;
 	//	private final float NOISE = (float) 2.0;
 	//
 	//	private GestureLibrary mLib;
-
+	private SensorManager mManager;
+	private Sensor mSensor;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +69,13 @@ public class MainActivity extends Activity{
 		//			FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 		//			transaction.add(R.id.fragment_container, frag).commit();
 		//		}
+
+		registerAccelerometer();
+	}
+	private void registerAccelerometer() {
+		mManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+		mSensor = mManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+		mManager.registerListener(mListener,mSensor,mManager.SENSOR_DELAY_NORMAL);
 	}
 
 	//	private void populate() {
@@ -112,67 +116,55 @@ public class MainActivity extends Activity{
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
+	private SensorEventListener mListener = new SensorEventListener() {
+		@Override
+		public void onAccuracyChanged(Sensor arg0, int arg1) {
+			return;
+		}
 
-	//	@Override
-	//	public void onAccuracyChanged(Sensor sensor, int accuracy) {
-	//		// TODO Auto-generated method stub
-	//
-	//	}
-	//	@Override
-	//	public void onSensorChanged(SensorEvent event) {
-	//		// TODO Auto-generated method stub
-	//		TextView tvX = (TextView)findViewById(R.id.x_axis);
-	//		TextView tvY = (TextView)findViewById(R.id.y_axis);
-	//		TextView tvZ = (TextView)findViewById(R.id.z_axis);
-	//		ImageView iv = (ImageView)findViewById(R.id.image);
-	//		float x = event.values[0];
-	//		float y = event.values[1];
-	//		float z = event.values[2];
-	//		if (!mInitialized) {
-	//			mLastX = x;
-	//			mLastY = y;
-	//			mLastZ = z;
-	//			tvX.setText("0.0");
-	//			tvY.setText("0.0");
-	//			tvZ.setText("0.0");
-	//			mInitialized = true;
-	//		} else {
-	//			float deltaX = Math.abs(mLastX - x);
-	//			float deltaY = Math.abs(mLastY - y);
-	//			float deltaZ = Math.abs(mLastZ - z);
-	//			if (deltaX < NOISE)
-	//				deltaX = (float) 0.0;
-	//			if (deltaY < NOISE)
-	//				deltaY = (float) 0.0;
-	//			if (deltaZ < NOISE)
-	//				deltaZ = (float) 0.0;
-	//			mLastX = x;
-	//			mLastY = y;
-	//			mLastZ = z;
-	//			tvX.setText(Float.toString(deltaX));
-	//			tvY.setText(Float.toString(deltaY));
-	//			tvZ.setText(Float.toString(deltaZ));
-	//			iv.setVisibility(View.VISIBLE);
-	//			if (deltaX > deltaY) {
-	//				iv.setImageResource(R.drawable.horizontal);
-	//			} else if (deltaY > deltaX) {
-	//				iv.setImageResource(R.drawable.vertical);
-	//			} else {
-	//				iv.setVisibility(View.INVISIBLE);
-	//			}
-	//		}
-	//	}
+		private boolean FLAG_INIT = false;
 
-	//Overridden lifecycle methods
+		@Override
+		public void onSensorChanged(SensorEvent event) {
+			int mType = event.sensor.getType();
+			if (mType == Sensor.TYPE_LINEAR_ACCELERATION && FLAG_INIT==false) {
+				integrate(event);
+				//redraw position of cursor change
+				FLAG_INIT = true;
+			}
+		}
+		private float[] Accl = new float[3];
+		private float[] mData = new float[3];
+		private float[] Vel = new float[3];
+		private float[] iVel = new float[3];
+		private float[] Disp = new float[3];
+		public void integrate(SensorEvent event) {
+			float dt =(float)(System.currentTimeMillis() - event.timestamp)/1000000000f;
+			mData = event.values;
+			for(int i = 0; i < 3; i++){
+				Accl[i] += mData[i];
+				Vel[i] = iVel[i] + (Accl[i] * dt);
+				iVel[i] = Vel[i];
+				Disp[i] = 0 + Vel[i] * dt;
+			}
+		}
+	};
+
 	@Override
 	protected void onResume() {
 		super.onResume();
-
+		mManager.registerListener(mListener,
+				mManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION),
+				SensorManager.SENSOR_DELAY_NORMAL);
 	}
 	@Override
 	protected void onPause() {
 		super.onPause();
-
+		if (mSensor != null) {
+			mManager.unregisterListener(mListener);
+		}
 	}
+
+
 
 }
