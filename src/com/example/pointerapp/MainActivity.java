@@ -123,22 +123,21 @@ public class MainActivity extends Activity{
 			return;
 		}
 
-		private boolean FLAG_INIT = false;
-
 		@Override
 		public void onSensorChanged(SensorEvent event) {
 			int mType = event.sensor.getType();
+			// flag for initialization?
 			if (mType == Sensor.TYPE_LINEAR_ACCELERATION) {
 				integrate(event);
 				//redraw position of cursor change
-				pointerView.updatePosition(Disp[0],Disp[1],Disp[2]);
-				
+				pointerView.updatePosition(Disp);
 			}
 		}
 		private float[] Accl = new float[3];
 		private float[] mData = new float[3];
 		private float[] Vel = new float[3];
 		private float[] iVel = new float[3];
+		private float[] iDisp = new float[3];
 		private float[] Disp = new float[3];
 		public void integrate(SensorEvent event) {
 			float dt =(float)(System.currentTimeMillis() - event.timestamp)/1000000000f;
@@ -147,7 +146,8 @@ public class MainActivity extends Activity{
 				Accl[i] += mData[i];
 				Vel[i] = iVel[i] + (Accl[i] * dt);
 				iVel[i] = Vel[i];
-				Disp[i] = 0 + Vel[i] * dt;
+				Disp[i] += iDisp[i] + Vel[i] * dt;
+				iDisp[i] = Disp[i];
 			}
 		}
 	};

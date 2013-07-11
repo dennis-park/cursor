@@ -59,9 +59,9 @@ public class MousePointerView extends ImageView{
 		}
 		return true;
 	}
-	public void updatePosition(float x, float y, float z) {
-		this.posX = x;
-		this.posY = y;
+	public void updatePosition(float[] pos) {
+		this.posX = pos[0];
+		this.posY = pos[1];
 		invalidate();
 	}
 
