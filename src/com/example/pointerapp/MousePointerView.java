@@ -29,14 +29,14 @@ public class MousePointerView extends ImageView{
 	//		params.rightMargin = Math.round(y);
 	//		view.setLayoutParams(params);
 	//	}
-	private boolean FLAG_INIT = true;
+	private boolean FLAG_INIT = false;
 	@Override
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
-		if (FLAG_INIT) {
+		if (!FLAG_INIT) {
 			posX = (float) ((this.getRight()-this.getLeft())/2.3);
 			posY = (float) ((this.getBottom()-this.getTop())/2.3);
-			FLAG_INIT = false;
+			FLAG_INIT = true;
 		}
 		canvas.drawBitmap(bitmap, posX, posY, null);
 	}

@@ -57,6 +57,7 @@ public class MainActivity extends Activity{
 		//display finger cursor on single canvas
 		Bitmap bitmap = BitmapFactory.decodeResource(getResources(), 
 				R.drawable.cursor);
+		registerAccelerometer();
 		pointerView = new MousePointerView(this, bitmap);
 		setContentView(pointerView);
 
@@ -71,7 +72,7 @@ public class MainActivity extends Activity{
 		//			transaction.add(R.id.fragment_container, frag).commit();
 		//		}
 
-		registerAccelerometer();
+		
 	}
 	private void registerAccelerometer() {
 		mManager = (SensorManager)getSystemService(SENSOR_SERVICE);
@@ -117,6 +118,13 @@ public class MainActivity extends Activity{
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
+	private boolean FLAG_INIT = false;
+	private float mTime;
+	private float[] Accl = new float[3];
+	private float[] Vel = new float[3];
+	private float[] iVel = new float[3];
+	private float[] Disp = new float[3];
+	private float[] iDisp = new float[3];
 	private SensorEventListener mListener = new SensorEventListener() {
 		@Override
 		public void onAccuracyChanged(Sensor arg0, int arg1) {
@@ -126,24 +134,24 @@ public class MainActivity extends Activity{
 		@Override
 		public void onSensorChanged(SensorEvent event) {
 			int mType = event.sensor.getType();
-			// flag for initialization?
+			// flag for initialization
 			if (mType == Sensor.TYPE_LINEAR_ACCELERATION) {
-				integrate(event);
+				if (!FLAG_INIT) {
+					FLAG_INIT = true;
+					mTime = event.timestamp;
+				} else {
+					integrate(event);
+				}
 				//redraw position of cursor change
 				pointerView.updatePosition(Disp);
 			}
 		}
-		private float[] Accl = new float[3];
-		private float[] mData = new float[3];
-		private float[] Vel = new float[3];
-		private float[] iVel = new float[3];
-		private float[] iDisp = new float[3];
-		private float[] Disp = new float[3];
+		
 		public void integrate(SensorEvent event) {
-			float dt =(float)(System.currentTimeMillis() - event.timestamp)/1000000000f;
-			mData = event.values;
+			float dt = (event.timestamp - mTime)/1000000000.0f;
+			mTime = event.timestamp;
 			for(int i = 0; i < 3; i++){
-				Accl[i] += mData[i];
+				Accl[i] += event.values[i];
 				Vel[i] = iVel[i] + (Accl[i] * dt);
 				iVel[i] = Vel[i];
 				Disp[i] += iDisp[i] + Vel[i] * dt;
