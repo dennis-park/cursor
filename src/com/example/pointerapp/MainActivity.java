@@ -77,7 +77,17 @@ public class MainActivity extends Activity{
 	private void registerAccelerometer() {
 		mManager = (SensorManager)getSystemService(SENSOR_SERVICE);
 		mSensor = mManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
-		mManager.registerListener(mListener,mSensor,mManager.SENSOR_DELAY_NORMAL);
+		mManager.registerListener(myAccelListener,mSensor,mManager.SENSOR_DELAY_NORMAL);
+	}
+	private void registerGravity() {
+		mManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+		mSensor = mManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+		mManager.registerListener(myGravListener,mSensor,mManager.SENSOR_DELAY_NORMAL);
+	}
+	private void registerGyro() {
+		mManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+		mSensor = mManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+		mManager.registerListener(myOrientationListener,mSensor,mManager.SENSOR_DELAY_NORMAL);
 	}
 
 	//	private void populate() {
@@ -118,6 +128,7 @@ public class MainActivity extends Activity{
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
+	
 	private boolean FLAG_INIT = false;
 	private float mTime;
 	private float[] Accl = new float[3];
@@ -125,11 +136,10 @@ public class MainActivity extends Activity{
 	private float[] iVel = new float[3];
 	private float[] Disp = new float[3];
 	private float[] iDisp = new float[3];
-	private SensorEventListener mListener = new SensorEventListener() {
+	
+	private SensorEventListener myAccelListener = new SensorEventListener() {
 		@Override
-		public void onAccuracyChanged(Sensor arg0, int arg1) {
-			return;
-		}
+		public void onAccuracyChanged(Sensor arg0, int arg1) {}
 
 		@Override
 		public void onSensorChanged(SensorEvent event) {
@@ -138,7 +148,7 @@ public class MainActivity extends Activity{
 			if (mType == Sensor.TYPE_LINEAR_ACCELERATION) {
 				if (!FLAG_INIT) {
 					FLAG_INIT = true;
-					mTime = event.timestamp;
+					mTime = 0.0f;
 				} else {
 					integrate(event);
 				}
@@ -152,7 +162,7 @@ public class MainActivity extends Activity{
 			mTime = event.timestamp;
 			for(int i = 0; i < 3; i++){
 				Accl[i] += event.values[i];
-				Vel[i] = iVel[i] + (Accl[i] * dt);
+				Vel[i] = iVel[i] + Accl[i] * dt;
 				iVel[i] = Vel[i];
 				Disp[i] += iDisp[i] + Vel[i] * dt;
 				iDisp[i] = Disp[i];
@@ -160,10 +170,35 @@ public class MainActivity extends Activity{
 		}
 	};
 
+	
+	private SensorEventListener myOrientationListener = new SensorEventListener() {
+
+		@Override
+		public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+
+		@Override
+		public void onSensorChanged(SensorEvent event) {
+			
+		}
+		
+	};
+	
+	private SensorEventListener myGravListener = new SensorEventListener() {
+
+		@Override
+		public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+
+		@Override
+		public void onSensorChanged(SensorEvent event) {
+			
+		}
+		
+	};
+	
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mManager.registerListener(mListener,
+		mManager.registerListener(myAccelListener,
 				mManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION),
 				SensorManager.SENSOR_DELAY_NORMAL);
 	}
@@ -171,7 +206,7 @@ public class MainActivity extends Activity{
 	protected void onPause() {
 		super.onPause();
 		if (mSensor != null) {
-			mManager.unregisterListener(mListener);
+			mManager.unregisterListener(myAccelListener);
 		}
 	}
 
