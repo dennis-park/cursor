@@ -33,7 +33,7 @@ public class MousePointerView extends ImageView{
 	@Override
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
-		if (!FLAG_INIT) {
+		if (!FLAG_INIT) { 
 			posX = (float) ((this.getRight()-this.getLeft())/2.3);
 			posY = (float) ((this.getBottom()-this.getTop())/2.3);
 			FLAG_INIT = true;

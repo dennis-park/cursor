@@ -28,188 +28,121 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-public class MainActivity extends Activity{
+public class MainActivity extends Activity implements SensorEventListener{
 	//	private final float NOISE = (float) 2.0;
 	//
 	//	private GestureLibrary mLib;
 	private SensorManager mManager;
-	private Sensor mSensor;
+	private Sensor accelSensor, gyroSensor;
 	private MousePointerView pointerView;
+	// accelerometer and magnetometer based rotation matrix
+	private float[] rotationMatrix = new float[9];
+	// orientation angles from accel and magnet
+	private float[] accMagOrientation = new float[3];
+	// magnetic field vector
+	private float[] magnet = new float[3];
+	// accelerometer vector
+	private float[] accel = new float[3];
+	private boolean FLAG_INIT = false;
+	private float mTime;
+	private float[] vel = new float[3];
+	private float[] ivel = new float[3];
+	private float[] disp = new float[3];
+	private float[] idisp = new float[3];
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		//populate activity with appropriate data
-		//		populate();
-
-		//		//gesture library
-		//		GestureOverlayView gestureView = new GestureOverlayView(this);
-		//		View inflate = getLayoutInflater().inflate(R.layout.activity_main, null); //null Viewgroup
-		//		gestureView.addView(inflate);
-		//		gestureView.addOnGesturePerformedListener(this);
-		//		mLib = GestureLibraries.fromRawResource(this, R.raw.gestures);
-		//		if (!mLib.load()) {
-		//			finish();
-		//		}
-		//setContentView(gestureView);
-
 		//display finger cursor on single canvas
 		Bitmap bitmap = BitmapFactory.decodeResource(getResources(), 
 				R.drawable.cursor);
-		registerAccelerometer();
+		mManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+		accelSensor = mManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+		gyroSensor = mManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+		initListeners();
+
 		pointerView = new MousePointerView(this, bitmap);
 		setContentView(pointerView);
 
-		//		//fragment
-		//		if (findViewById(R.id.fragment_container) != null) {
-		//			if (savedInstanceState != null) {
-		//				return;
-		//			}
-		//			Fragment frag = new Fragment();
-		//			frag.setArguments(getIntent().getExtras());
-		//			FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-		//			transaction.add(R.id.fragment_container, frag).commit();
-		//		}
-
-		
-	}
-	private void registerAccelerometer() {
-		mManager = (SensorManager)getSystemService(SENSOR_SERVICE);
-		mSensor = mManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
-		mManager.registerListener(myAccelListener,mSensor,mManager.SENSOR_DELAY_NORMAL);
-	}
-	private void registerGravity() {
-		mManager = (SensorManager)getSystemService(SENSOR_SERVICE);
-		mSensor = mManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
-		mManager.registerListener(myGravListener,mSensor,mManager.SENSOR_DELAY_NORMAL);
-	}
-	private void registerGyro() {
-		mManager = (SensorManager)getSystemService(SENSOR_SERVICE);
-		mSensor = mManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-		mManager.registerListener(myOrientationListener,mSensor,mManager.SENSOR_DELAY_NORMAL);
-	}
-
-	//	private void populate() {
-	//		Cursor query = getContentResolver().query(ContactsContract.AUTHORITY_URI,
-	//				new String[] {ContactsContract.PRIMARY_ACCOUNT_NAME}, null, null, null);
-	//		
-	//	}
 
 
-	// add helper method to access and manip control to connect remotely
-	//	@Override
-	//	public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {
-	//		ArrayList<Prediction> predictions = mLib.recognize(gesture);
-	//		Log.v("performed", "performed");
-	//		//at least one prediction
-	//		if (predictions.size() > 0) {
-	//			Prediction prediction = predictions.get(0);
-	//			if (prediction.score > 1.0) {
-	//				String action = predictions.get(0).name;
-	//				if (action.equalsIgnoreCase("action_RIGHT")) {
-	//					//test1
-	//				} else if (action.equalsIgnoreCase("action_LEFT")) {
-	//					//test2
-	//				} else if (action.equalsIgnoreCase("action_REFRESH")) {
-	//					//test3
-	//				}
-	//					
-	//			}
-	//		}
-	//	}
-	//	public static int getDrawable(Context context, String name) {
-	//		return context.getResources().getIdentifier(name, "drawable",
-	//				context.getPackageName());
-	//	}
+	}
+	private void initListeners() {
+		mManager.registerListener(this,accelSensor,mManager.SENSOR_DELAY_NORMAL);
+		mManager.registerListener(this,gyroSensor,SensorManager.SENSOR_DELAY_FASTEST);
+	}
+
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
-	
-	private boolean FLAG_INIT = false;
-	private float mTime;
-	private float[] Accl = new float[3];
-	private float[] Vel = new float[3];
-	private float[] iVel = new float[3];
-	private float[] Disp = new float[3];
-	private float[] iDisp = new float[3];
-	
-	private SensorEventListener myAccelListener = new SensorEventListener() {
-		@Override
-		public void onAccuracyChanged(Sensor arg0, int arg1) {}
 
-		@Override
-		public void onSensorChanged(SensorEvent event) {
-			int mType = event.sensor.getType();
-			// flag for initialization
-			if (mType == Sensor.TYPE_LINEAR_ACCELERATION) {
-				if (!FLAG_INIT) {
-					FLAG_INIT = true;
-					mTime = 0.0f;
-				} else {
-					integrate(event);
-				}
-				//redraw position of cursor change
-				pointerView.updatePosition(Disp);
-			}
-		}
-		
-		public void integrate(SensorEvent event) {
-			float dt = (event.timestamp - mTime)/1000000000.0f;
-			mTime = event.timestamp;
-			for(int i = 0; i < 3; i++){
-				Accl[i] += event.values[i];
-				Vel[i] = iVel[i] + Accl[i] * dt;
-				iVel[i] = Vel[i];
-				Disp[i] += iDisp[i] + Vel[i] * dt;
-				iDisp[i] = Disp[i];
-			}
-		}
-	};
-
-	
-	private SensorEventListener myOrientationListener = new SensorEventListener() {
-
-		@Override
-		public void onAccuracyChanged(Sensor sensor, int accuracy) {}
-
-		@Override
-		public void onSensorChanged(SensorEvent event) {
-			
-		}
-		
-	};
-	
-	private SensorEventListener myGravListener = new SensorEventListener() {
-
-		@Override
-		public void onAccuracyChanged(Sensor sensor, int accuracy) {}
-
-		@Override
-		public void onSensorChanged(SensorEvent event) {
-			
-		}
-		
-	};
-	
+	@Override
+	protected void onStop() {
+		super.onStop();
+		mManager.unregisterListener(this);
+	}
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mManager.registerListener(myAccelListener,
+		mManager.registerListener(this,
 				mManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION),
 				SensorManager.SENSOR_DELAY_NORMAL);
 	}
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if (mSensor != null) {
-			mManager.unregisterListener(myAccelListener);
+		if (accelSensor != null || gyroSensor != null) {
+			mManager.unregisterListener(this);
 		}
 	}
-
-
-
+	@Override
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {
+		// TODO Auto-generated method stub
+	}
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		// flag for initialization
+		int mType = event.sensor.getType();
+		switch (mType) {
+			case Sensor.TYPE_LINEAR_ACCELERATION:
+				if (!FLAG_INIT) {
+					FLAG_INIT = true;
+					mTime = 0.0f;
+				} else {
+					integrate(event);
+				}	
+				//redraw position of cursor change
+				pointerView.updatePosition(disp);
+				break;
+			case Sensor.TYPE_GYROSCOPE:
+				//process gyro data
+				gyro(event);
+				break;
+		}
+	}
+	public void calculateAccMagOrientation() {
+		if(SensorManager.getRotationMatrix(rotationMatrix, null, accel, magnet)) {
+			SensorManager.getOrientation(rotationMatrix, accMagOrientation);
+		}
+	}
+	public void gyro(SensorEvent event) {
+		//process matrix values
+	}
+	public void integrate(SensorEvent event) {
+		float dt = (event.timestamp - mTime)/1000000000.0f;
+		mTime = event.timestamp;
+		for(int i = 0; i < 3; i++){
+			accel[i] += event.values[i];
+			vel[i] = ivel[i] + accel[i] * dt;
+			ivel[i] = vel[i];
+			disp[i] += idisp[i] + vel[i] * dt;
+			idisp[i] = disp[i];
+		}
+	} 
 }
+
