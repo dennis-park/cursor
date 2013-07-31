@@ -39,16 +39,15 @@ public class MainActivity extends Activity implements SensorEventListener{
 	private float[] rotationMatrix = new float[9];
 	// orientation angles from accel and magnet
 	private float[] accMagOrientation = new float[3];
-	// magnetic field vector
 	private float[] magnet = new float[3];
-	// accelerometer vector
 	private float[] accel = new float[3];
-	private boolean FLAG_INIT = false;
-	private float mTime;
+	private float[] grav = new float[3];
 	private float[] vel = new float[3];
 	private float[] ivel = new float[3];
 	private float[] disp = new float[3];
 	private float[] idisp = new float[3];
+	private boolean FLAG_INIT = false;
+	private float mTime;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +61,10 @@ public class MainActivity extends Activity implements SensorEventListener{
 		gyroSensor = mManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 		initListeners();
 
+		SensorManager.getRotationMatrix(rotationMatrix, accMagOrientation, grav, magnet);
+		//pass accel and magnetic
+		SensorManager.getOrientation(rotationMatrix, accMagOrientation);
+		
 		pointerView = new MousePointerView(this, bitmap);
 		setContentView(pointerView);
 
