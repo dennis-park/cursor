@@ -41,6 +41,7 @@ public class MainActivity extends Activity implements SensorEventListener{
 	private float[] accMagOrientation = new float[3];
 	private float[] magnet = new float[3];
 	private float[] accel = new float[3];
+	private float[] gyro = new float[3];
 	private float[] grav = new float[3];
 	private float[] vel = new float[3];
 	private float[] ivel = new float[3];
@@ -67,8 +68,6 @@ public class MainActivity extends Activity implements SensorEventListener{
 		
 		pointerView = new MousePointerView(this, bitmap);
 		setContentView(pointerView);
-
-
 
 	}
 	private void initListeners() {
@@ -124,7 +123,7 @@ public class MainActivity extends Activity implements SensorEventListener{
 				break;
 			case Sensor.TYPE_GYROSCOPE:
 				//process gyro data
-				gyro(event);
+				filter(gyro[0], gyro[1]);
 				break;
 		}
 	}
@@ -133,9 +132,32 @@ public class MainActivity extends Activity implements SensorEventListener{
 			SensorManager.getOrientation(rotationMatrix, accMagOrientation);
 		}
 	}
-	public void gyro(SensorEvent event) {
-		//process matrix values
+	float tt;
+	double GYROSCOPE_SENSITIVITY = 65.536;
+	double ACCELEROMETER_SENSITIVITY = 8192.0;
+	
+	public void filter(float pitch, float roll) {
+		float pitchAccel, rollAccel;
+		
+		//integrate gyro
+		pitch += (gyro[0] / GYROSCOPE_SENSITIVITY) * tt;
+		roll  -= (gyro[1] / GYROSCOPE_SENSITIVITY) * tt;
+		
+		int sens = 32768;
+		
+		int forceMagnitudeApprox = (int) (Math.abs(accel[0]) + Math.abs(accel[1]) + Math.abs(accel[2]));
+		if (forceMagnitudeApprox > 8192 && forceMagnitudeApprox < sens) {
+			// Turning around the X axis results in a vector on the Y-axis
+			pitchAccel = (float) (Math.atan2(accel[1], accel[2]) * 180 / Math.PI);
+			//complementary eq
+			pitch = (float) (pitch * 0.98 + pitchAccel * 0.02);
+			
+			// Turning around the Y axis results in a vector on the X-axis
+			rollAccel = (float) (Math.atan2(accel[0], accel[2]) * 180 / Math.PI);
+			roll = (float) (roll * 0.98 + rollAccel * 0.02);
+		}
 	}
+
 	public void integrate(SensorEvent event) {
 		float dt = (event.timestamp - mTime)/1000000000.0f;
 		mTime = event.timestamp;
@@ -146,6 +168,7 @@ public class MainActivity extends Activity implements SensorEventListener{
 			disp[i] += idisp[i] + vel[i] * dt;
 			idisp[i] = disp[i];
 		}
+		tt = dt;
 	} 
 }
 
